@@ -31,6 +31,7 @@ function ensureRightRay(scene) {
 
   const mesh = new THREE.Mesh(geometry, material);
   mesh.name = 'right-controller-ray';
+  mesh.visible = false;
   scene.add(mesh);
   state.ray.mesh = mesh;
 }
@@ -52,8 +53,14 @@ function getRightGamepad() {
 }
 
 function updateRightRayTransform(rightController) {
-  if (!state.ray.mesh || !rightController) return;
+  if (!state.ray.mesh) return;
 
+  if (!rightController) {
+    state.ray.mesh.visible = false;
+    return;
+  }
+
+  state.ray.mesh.visible = true;
   state.ray.mesh.position.copy(rightController.position);
   state.ray.mesh.quaternion.copy(rightController.quaternion);
   state.ray.mesh.updateMatrixWorld(true);
@@ -128,6 +135,13 @@ function handleTriggerInteraction(rightController, hoverTarget) {
   const pressed = isTriggerPressed(gamepad);
 
   if (state.sketchMode) {
+    if (!rightController) {
+      if (previousTriggerPressed && !pressed) {
+        sketch.endStroke();
+      }
+      previousTriggerPressed = pressed;
+      return;
+    }
     if (pressed) {
       tempDirection.copy(forward).applyQuaternion(rightController.quaternion).normalize();
       tempTipPosition.copy(rightController.position).addScaledVector(tempDirection, RAY_LENGTH);
